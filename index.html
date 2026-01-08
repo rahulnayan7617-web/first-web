@@ -1,31 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="This is my first webpage created as a beginner in web development.">
     <title>First webpage</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <h1>Welcome to my first website! <h4>by Rahul Nayan</h4></h1>
-    <p style="background-color: rgb(129, 155, 14);">This is a paragraph on my first webpage.</p>
 
-    <table>
-        <tr>
-             <th colspan="6">Weblink </th>
-             </tr>
-             <tr >
-                <td>         <p> <img width="30" height="30" src="download.webp" alt=""><a target="_blank" href="https://www.google.com">Open Google</a> </p> </td>
-                    <td> <p>  <img width="30" height="30" src="instagram.webp" alt=""> <a target="_blank" href="https://www.instagram.com">Open Instagram</a> </p> </td>
-                     <td><p>  <img width="30" height="30" src="free fire image.webp" alt=""> <a target="_blank" href="https://ff.garena.com">Open Free Fire</a> </p></td>
-                     <td><p>  <img width="30" height="30" src="chat.webp" alt=""> <a target="_blank" href="https://www.chatgpt.com">Open Chat Gpt</a> </p></td>
-                    <td><p>  <img width="30" height="30" src="perplexity.webp" alt=""> <a target="_blank" href="https://www.perplexity.com">Open Perplexity</a> </p></td>
-                   <td><p> <img width="20" height="20" src="" alt=""> <a href="https://www.github.com">Open GitHub</a></p> </td> 
-           </tr>   
-                    </table>
- 
-   <img width="" height="500" src="WhatsApp Image 2024-01-19 at 8.21.37 AM.jpeg" alt="Anime">
-  <img src="" alt="">
-<script src="script.js"></script>
+<body>
+    <!-- LOGIN BUTTON (NEW - Add to top right) -->
+    <div id="loginArea" style="position:absolute; top:10px; right:10px;">
+        <button class="login-btn" onclick="showLoginModal()" style="padding:10px 20px; background:#667eea; color:white; border:none; border-radius:5px; cursor:pointer;">🔐 Login</button>
+    </div>
+
+    <!-- PROTECTED MAIN CONTENT (WRAPPED) -->
+    <div id="mainContent">
+        <h1>Welcome to my first website! <h4>by Rahul Nayan</h4></h1>
+        <p style="background-color: rgb(129, 155, 14);">This is a paragraph on my first webpage.</p>
+
+        <table>
+            <tr>
+                <th colspan="6">Weblink </th>
+            </tr>
+            <tr>
+                <td>
+                    <p> <img width="30" height="30" src="download.webp" alt=""><a target="_blank"
+                            href="https://www.google.com">Open Google</a> </p>
+                </td>
+                <td>
+                    <p> <img width="30" height="30" src="instagram.webp" alt=""> <a target="_blank"
+                            href="https://www.instagram.com">Open Instagram</a> </p>
+                </td>
+                <td>
+                    <p> <img width="30" height="30" src="free fire image.webp" alt=""> <a target="_blank"
+                            href="https://ff.garena.com">Open Free Fire</a> </p>
+                </td>
+                <td>
+                    <p> <img width="30" height="30" src="chat.webp" alt=""> <a target="_blank"
+                            href="https://www.chatgpt.com">Open Chat Gpt</a> </p>
+                </td>
+                <td>
+                    <p> <img width="30" height="30" src="perplexity.webp" alt=""> <a target="_blank"
+                            href="https://www.perplexity.com">Open Perplexity</a> </p>
+                </td>
+                <td>
+                    <p> <img width="20" height="20" src="" alt=""> <a href="https://www.github.com">Open GitHub</a></p>
+                </td>
+            </tr>
+        </table>
+
+        <img width="500" height="500" src="WhatsApp Image 2024-01-19 at 8.21.37 AM.jpeg" alt="Anime">
+        <img src="" alt="">
+
+        <h1>Form</h1>
+        <form action="post">
+            <label for="id">Enter your name </label>
+            <input type="text" id="yourname" name="yourname" placeholder="Enter your name" autofocus required>
+            <div>
+                <input type="radio" name="gender" id="male" value="male">
+                <label for="male">male</label>
+                <input type="radio" name="gender" id="female" value="female">
+                <label for="female">female</label>
+            </div>
+        </form>
+        
+        <a href="https://web.dev/static/learn/html/overview/image/an-opening-tag-attribute-363effa33af66_856.png">registration</a>
+    </div>
+
+    <!-- LOGIN MODAL (NEW - Complete popup system) -->
+    <div id="loginModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999;">
+        <div style="background:white; width:90%; max-width:400px; margin:100px auto; padding:30px; border-radius:15px; position:relative;">
+            <div id="loginFormDiv">
+                <h2 style="text-align:center; margin-bottom:20px;">🔐 Login</h2>
+                <input id="loginUserId" placeholder="User ID" style="width:100%; padding:15px; margin:10px 0; border:1px solid #ddd; border-radius:5px; box-sizing:border-box;">
+                <input id="loginPassword" type="password" placeholder="Password" style="width:100%; padding:15px; margin:10px 0; border:1px solid #ddd; border-radius:5px; box-sizing:border-box;">
+                <button onclick="loginUser()" style="width:100%; padding:15px; background:#667eea; color:white; border:none; border-radius:5px; cursor:pointer; font-size:16px;">Login</button>
+                <p style="text-align:center; margin:10px 0; cursor:pointer; color:#666;" onclick="showRegisterDiv()">No account? Sign Up</p>
+            </div>
+            <div id="registerFormDiv" style="display:none;">
+                <h2 style="text-align:center; margin-bottom:20px;">📝 Sign Up</h2>
+                <input id="regUserId" placeholder="Create User ID" style="width:100%; padding:15px; margin:10px 0; border:1px solid #ddd; border-radius:5px; box-sizing:border-box;">
+                <input id="regPassword" type="password" placeholder="Password (6+ chars)" style="width:100%; padding:15px; margin:10px 0; border:1px solid #ddd; border-radius:5px; box-sizing:border-box;">
+                <button onclick="registerUser()" style="width:100%; padding:15px; background:#28a745; color:white; border:none; border-radius:5px; cursor:pointer; font-size:16px;">Create Account</button>
+                <p style="text-align:center; margin:10px 0; cursor:pointer; color:#666;" onclick="showLoginDiv()">Have account? Login</p>
+            </div>
+            <button onclick="closeLogin()" style="position:absolute; top:10px; right:15px; background:none; border:none; font-size:24px; cursor:pointer;">×</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <!-- LOGIN JAVASCRIPT (NEW - Complete system) -->
+    <script>
+        const USERS_KEY = 'websiteUsers';
+        const CURRENT_USER_KEY = 'currentUser';
+
+        // Show login popup
+        function showLoginModal() {
+            document.getElementById('loginModal').style.display = 'block';
+            document.getElementById('loginFormDiv').style.display = 'block';
+            document.getElementById('registerFormDiv').style.display = 'none';
+        }
+
+        // Close popup
+        function closeLogin() {
+            document.getElementById('loginModal').style.display = 'none';
+        }
+
+        // Show register form
+        function showRegisterDiv() {
+            document.getElementById('loginFormDiv').style.display = 'none';
+            document.getElementById('registerFormDiv').style.display = 'block';
+        }
+
+        // Show login form
+        function showLoginDiv() {
+            document.getElementById('loginFormDiv').style.display = 'block';
+            document.getElementById('registerFormDiv').style.display = 'none';
+        }
+
+        // Register new user
+        function registerUser() {
+            const userId = document.getElementById('regUserId').value.trim();
+            const password = document.getElementById('regPassword').value;
+            
+            if (!userId || !password || password.length < 6) {
+                alert('User ID required! Password must be 6+ characters.');
+                return;
+            }
+            
+            let users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+            if (users.find(u => u.userId === userId)) {
+                alert('User ID already exists!');
+                return;
+            }
+            
+            users.push({
+                userId: userId,
+                password: password,
+                joined: new Date().toLocaleString()
+            });
+            
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+            alert('✅ Account created! Please login.');
+            showLoginDiv();
+        }
+
+        // Login user
+        function loginUser() {
+            const userId = document.getElementById('loginUserId').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            let users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+            let user = users.find(u => u.userId === userId && u.password === password);
+            
+            if (user) {
+                localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+                closeLogin();
+                document.getElementById('loginArea').innerHTML = `
+                    <span>👋 Welcome <strong>${user.userId}</strong>! </span>
+                    <button onclick="logoutUser()" style="margin-left:10px; padding:5px 15px; background:#dc3545; color:white; border:none; border-radius:5px; cursor:pointer;">Logout</button>
+                `;
+                document.getElementById('mainContent').style.display = 'block';
+                alert(`Welcome back ${user.userId}!`);
+            } else {
+                alert('❌ Wrong User ID or Password!');
+            }
+        }
+
+        // Logout
+        function logoutUser() {
+            localStorage.removeItem(CURRENT_USER_KEY);
+            document.getElementById('loginArea').innerHTML = `
+                <button onclick="showLoginModal()" style="padding:10px 20px; background:#667eea; color:white; border:none; border-radius:5px; cursor:pointer;">
+                    🔐 Login
+                </button>
+            `;
+            document.getElementById('mainContent').style.display = 'none';
+        }
+
+        // Check if already logged in
+        if (localStorage.getItem(CURRENT_USER_KEY)) {
+            const user = JSON.parse(localStorage.getItem(CURRENT_USER_KEY));
+            document.getElementById('loginArea').innerHTML = `
+                <span>👋 Welcome <strong>${user.userId}</strong>! </span>
+                <button onclick="logoutUser()" style="margin-left:10px; padding:5px 15px; background:#dc3545; color:white; border:none; border-radius:5px; cursor:pointer;">Logout</button>
+            `;
+            document.getElementById('mainContent').style.display = 'block';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('loginModal').onclick = function(e) {
+            if (e.target === this) closeLogin();
+        }
+    </script>
 </body>
+
 </html>
