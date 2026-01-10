@@ -1,200 +1,269 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="This is my first webpage created as a beginner in web development.">
-    <title>First webpage</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="description" content="Rahul Nayan's first website with Firebase login">
+    <title>Rahul Nayan - Protected Website</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        #loginArea { 
+            position: fixed; top: 20px; right: 20px; z-index: 1000; 
+        }
+        .login-btn, .logout-btn {
+            padding: 12px 24px; background: #667eea; color: white; 
+            border: none; border-radius: 25px; cursor: pointer; 
+            font-weight: bold; font-size: 14px;
+        }
+        .logout-btn { background: #ff6b6b; }
+        .logout-btn:hover { background: #ff5252; }
+        #mainContent { 
+            max-width: 1000px; margin: 80px auto 20px; 
+            background: white; padding: 30px; border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: none;
+        }
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; 
+            width: 100%; height: 100%; background: rgba(0,0,0,0.7); 
+            z-index: 9999; backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: white; width: 90%; max-width: 420px; 
+            margin: 100px auto; padding: 40px; border-radius: 20px; 
+            position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        .close { 
+            position: absolute; right: 20px; top: 15px; 
+            font-size: 30px; cursor: pointer; color: #999; 
+        }
+        .close:hover { color: #333; }
+        input {
+            width: 100%; padding: 18px; margin: 12px 0; 
+            border: 2px solid #e1e5e9; border-radius: 12px; 
+            font-size: 16px; transition: all 0.3s;
+        }
+        input:focus {
+            outline: none; border-color: #667eea; 
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+        button {
+            width: 100%; padding: 18px; margin: 12px 0; 
+            border: none; border-radius: 12px; font-size: 16px; 
+            font-weight: bold; cursor: pointer; transition: all 0.3s;
+        }
+        .login-btn { background: #667eea; color: white; }
+        .login-btn:hover { background: #5a67d8; transform: translateY(-2px); }
+        .register-btn { background: #28a745; color: white; }
+        .register-btn:hover { background: #218838; transform: translateY(-2px); }
+        .switch { 
+            text-align: center; cursor: pointer; 
+            color: #667eea; margin-top: 20px; font-weight: 500;
+        }
+        .switch:hover { text-decoration: underline; }
+        .hidden { display: none !important; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border: 1px solid #ddd; }
+        th { background: #667eea; color: white; }
+        img { max-width: 100%; height: auto; border-radius: 10px; }
+    </style>
 </head>
-
 <body>
-    <!-- LOGIN BUTTON (NEW - Add to top right) -->
-    <div id="loginArea" style="position:absolute; top:10px; right:10px;">
-        <button class="login-btn" onclick="showLoginModal()" style="padding:10px 20px; background:#667eea; color:white; border:none; border-radius:5px; cursor:pointer;">🔐 Login</button>
+    <!-- LOGIN BUTTON (Top Right) -->
+    <div id="loginArea">
+        <button class="login-btn" onclick="showLogin()">🔐 Login</button>
     </div>
 
-    <!-- PROTECTED MAIN CONTENT (WRAPPED) -->
+    <!-- PROTECTED MAIN CONTENT (Hidden until login) -->
     <div id="mainContent">
         <h1>Welcome to my first website! <h4>by Rahul Nayan</h4></h1>
-        <p style="background-color: rgb(129, 155, 14);">This is a paragraph on my first webpage.</p>
+        <p style="background-color: rgb(129, 155, 14); padding: 15px; border-radius: 8px; color: white;">
+            This is a paragraph on my first webpage.
+        </p>
 
+        <!-- YOUR COOL TABLE -->
         <table>
+            <tr><th colspan="6">🚀 Weblinks</th></tr>
             <tr>
-                <th colspan="6">Weblink </th>
-            </tr>
-            <tr>
-                <td>
-                    <p> <img width="30" height="30" src="download.webp" alt=""><a target="_blank"
-                            href="https://www.google.com">Open Google</a> </p>
-                </td>
-                <td>
-                    <p> <img width="30" height="30" src="instagram.webp" alt=""> <a target="_blank"
-                            href="https://www.instagram.com">Open Instagram</a> </p>
-                </td>
-                <td>
-                    <p> <img width="30" height="30" src="free fire image.webp" alt=""> <a target="_blank"
-                            href="https://ff.garena.com">Open Free Fire</a> </p>
-                </td>
-                <td>
-                    <p> <img width="30" height="30" src="chat.webp" alt=""> <a target="_blank"
-                            href="https://www.chatgpt.com">Open Chat Gpt</a> </p>
-                </td>
-                <td>
-                    <p> <img width="30" height="30" src="perplexity.webp" alt=""> <a target="_blank"
-                            href="https://www.perplexity.com">Open Perplexity</a> </p>
-                </td>
-                <td>
-                    <p> <img width="20" height="20" src="" alt=""> <a href="https://www.github.com">Open GitHub</a></p>
-                </td>
+                <td><img width="30" height="30" src="download.webp" alt="Google"><a target="_blank" href="https://www.google.com"> Google</a></td>
+                <td><img width="30" height="30" src="instagram.webp" alt="Instagram"><a target="_blank" href="https://www.instagram.com"> Instagram</a></td>
+                <td><img width="30" height="30" src="free fire image.webp" alt="Free Fire"><a target="_blank" href="https://ff.garena.com"> Free Fire</a></td>
+                <td><img width="30" height="30" src="chat.webp" alt="ChatGPT"><a target="_blank" href="https://chatgpt.com"> ChatGPT</a></td>
+                <td><img width="30" height="30" src="perplexity.webp" alt="Perplexity"><a target="_blank" href="https://www.perplexity.ai"> Perplexity</a></td>
+                <td><a href="https://github.com" target="_blank">🐙 GitHub</a></td>
             </tr>
         </table>
 
-        <img width="500" height="500" src="WhatsApp Image 2024-01-19 at 8.21.37 AM.jpeg" alt="Anime">
-        <img src="" alt="">
-
-        <h1>Form</h1>
-        <form action="post">
-            <label for="id">Enter your name </label>
-            <input type="text" id="yourname" name="yourname" placeholder="Enter your name" autofocus required>
-            <div>
-                <input type="radio" name="gender" id="male" value="male">
-                <label for="male">male</label>
-                <input type="radio" name="gender" id="female" value="female">
-                <label for="female">female</label>
+        <!-- YOUR ANIME IMAGE -->
+        <img width="500" height="500" src="WhatsApp Image 2024-01-19 at 8.21.37 AM.jpeg" alt="Anime" style="margin: 20px 0;">
+        
+        <!-- YOUR FORM -->
+        <h1>📝 Form</h1>
+        <form style="max-width: 500px;">
+            <label for="yourname" style="display: block; margin-bottom: 10px; font-weight: bold;">Enter your name:</label>
+            <input type="text" id="yourname" placeholder="Enter your name" autofocus required style="margin-bottom: 20px;">
+            <div style="display: flex; gap: 15px;">
+                <label><input type="radio" name="gender" value="male"> Male</label>
+                <label><input type="radio" name="gender" value="female"> Female</label>
             </div>
         </form>
-        
-        <a href="https://web.dev/static/learn/html/overview/image/an-opening-tag-attribute-363effa33af66_856.png">registration</a>
     </div>
 
-    <!-- LOGIN MODAL (NEW - Complete popup system) -->
-    <div id="loginModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999;">
-        <div style="background:white; width:90%; max-width:400px; margin:100px auto; padding:30px; border-radius:15px; position:relative;">
-            <div id="loginFormDiv">
-                <h2 style="text-align:center; margin-bottom:20px;">🔐 Login</h2>
-                <input id="loginUserId" placeholder="User ID" style="width:100%; padding:15px; margin:10px 0; border:1px solid #ddd; border-radius:5px; box-sizing:border-box;">
-                <input id="loginPassword" type="password" placeholder="Password" style="width:100%; padding:15px; margin:10px 0; border:1px solid #ddd; border-radius:5px; box-sizing:border-box;">
-                <button onclick="loginUser()" style="width:100%; padding:15px; background:#667eea; color:white; border:none; border-radius:5px; cursor:pointer; font-size:16px;">Login</button>
-                <p style="text-align:center; margin:10px 0; cursor:pointer; color:#666;" onclick="showRegisterDiv()">No account? Sign Up</p>
+    <!-- 🔥 BEAUTIFUL LOGIN MODAL -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLogin()">&times;</span>
+            
+            <!-- LOGIN FORM -->
+            <div id="loginForm">
+                <h2 style="margin-bottom: 25px; text-align: center; color: #333;">🔐 Welcome Back</h2>
+                <input id="email" type="email" placeholder="📧 Enter your email">
+                <input id="password" type="password" placeholder="🔒 Enter your password">
+                <button class="login-btn" onclick="login()">Sign In</button>
+                <div class="switch" onclick="showRegister()">Don't have account? 📝 Register</div>
             </div>
-            <div id="registerFormDiv" style="display:none;">
-                <h2 style="text-align:center; margin-bottom:20px;">📝 Sign Up</h2>
-                <input id="regUserId" placeholder="Create User ID" style="width:100%; padding:15px; margin:10px 0; border:1px solid #ddd; border-radius:5px; box-sizing:border-box;">
-                <input id="regPassword" type="password" placeholder="Password (6+ chars)" style="width:100%; padding:15px; margin:10px 0; border:1px solid #ddd; border-radius:5px; box-sizing:border-box;">
-                <button onclick="registerUser()" style="width:100%; padding:15px; background:#28a745; color:white; border:none; border-radius:5px; cursor:pointer; font-size:16px;">Create Account</button>
-                <p style="text-align:center; margin:10px 0; cursor:pointer; color:#666;" onclick="showLoginDiv()">Have account? Login</p>
+
+            <!-- REGISTER FORM -->
+            <div id="registerForm" class="hidden">
+                <h2 style="margin-bottom: 25px; text-align: center; color: #333;">📝 Create Account</h2>
+                <input id="regEmail" type="email" placeholder="📧 Enter your email">
+                <input id="regPassword" type="password" placeholder="🔒 Create password (6+ chars)">
+                <button class="register-btn" onclick="register()">Create Account</button>
+                <div class="switch" onclick="showLogin()">Already have account? 🔐 Login</div>
             </div>
-            <button onclick="closeLogin()" style="position:absolute; top:10px; right:15px; background:none; border:none; font-size:24px; cursor:pointer;">×</button>
         </div>
     </div>
 
-    <script src="script.js"></script>
-    <!-- LOGIN JAVASCRIPT (NEW - Complete system) -->
-    <script>
-        const USERS_KEY = 'websiteUsers';
-        const CURRENT_USER_KEY = 'currentUser';
+    <!-- 🔥 YOUR FIREBASE CONFIG + LOGIN SYSTEM -->
+    <script type="module">
+        // YOUR FIREBASE CONFIG (UPDATED FOR v12.7.0)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
 
-        // Show login popup
-        function showLoginModal() {
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEF3w3xaLBQw3ctkdikywqiXy9hvr00Bg",
+            authDomain: "rahul-sfirst-web.firebaseapp.com",
+            databaseURL: "https://rahul-sfirst-web-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "rahul-sfirst-web",
+            storageBucket: "rahul-sfirst-web.firebasestorage.app",
+            messagingSenderId: "813239852248",
+            appId: "1:813239852248:web:91d29ed494917ad6e30bad",
+            measurementId: "G-74DMWXDQRX"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // 🌟 GLOBAL FUNCTIONS (for onclick)
+        window.showLogin = () => {
             document.getElementById('loginModal').style.display = 'block';
-            document.getElementById('loginFormDiv').style.display = 'block';
-            document.getElementById('registerFormDiv').style.display = 'none';
-        }
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+        };
 
-        // Close popup
-        function closeLogin() {
+        window.closeLogin = () => {
             document.getElementById('loginModal').style.display = 'none';
-        }
+        };
 
-        // Show register form
-        function showRegisterDiv() {
-            document.getElementById('loginFormDiv').style.display = 'none';
-            document.getElementById('registerFormDiv').style.display = 'block';
-        }
+        window.showRegister = () => {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+        };
 
-        // Show login form
-        function showLoginDiv() {
-            document.getElementById('loginFormDiv').style.display = 'block';
-            document.getElementById('registerFormDiv').style.display = 'none';
-        }
+        window.showLoginForm = () => {
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+        };
 
-        // Register new user
-        function registerUser() {
-            const userId = document.getElementById('regUserId').value.trim();
+        // 📝 REGISTER NEW USER
+        window.register = async () => {
+            const email = document.getElementById('regEmail').value.trim();
             const password = document.getElementById('regPassword').value;
             
-            if (!userId || !password || password.length < 6) {
-                alert('User ID required! Password must be 6+ characters.');
-                return;
+            if (!email || !password || password.length < 6) {
+                return alert('❌ Email & Password (6+ chars) required!');
             }
             
-            let users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-            if (users.find(u => u.userId === userId)) {
-                alert('User ID already exists!');
-                return;
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                alert('✅ Account created! Please login.');
+                document.getElementById('regEmail').value = '';
+                document.getElementById('regPassword').value = '';
+                showLoginForm();
+            } catch (error) {
+                if (error.code === 'auth/email-already-in-use') {
+                    alert('❌ Email already registered! Login instead.');
+                } else {
+                    alert('❌ Registration failed: ' + error.message);
+                }
             }
-            
-            users.push({
-                userId: userId,
-                password: password,
-                joined: new Date().toLocaleString()
-            });
-            
-            localStorage.setItem(USERS_KEY, JSON.stringify(users));
-            alert('✅ Account created! Please login.');
-            showLoginDiv();
-        }
+        };
 
-        // Login user
-        function loginUser() {
-            const userId = document.getElementById('loginUserId').value.trim();
-            const password = document.getElementById('loginPassword').value;
+        // 🔐 LOGIN USER
+        window.login = async () => {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
             
-            let users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-            let user = users.find(u => u.userId === userId && u.password === password);
+            if (!email || !password) {
+                return alert('❌ Please enter email & password!');
+            }
+            
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                document.getElementById('email').value = '';
+                document.getElementById('password').value = '';
+            } catch (error) {
+                if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                    alert('❌ Wrong email or password!');
+                } else {
+                    alert('❌ Login failed: ' + error.message);
+                }
+            }
+        };
+
+        // 🚪 LOGOUT
+        window.logout = async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        };
+
+        // ✨ AUTO LOGIN CHECK (runs on page load)
+        onAuthStateChanged(auth, (user) => {
+            const loginArea = document.getElementById('loginArea');
+            const mainContent = document.getElementById('mainContent');
             
             if (user) {
-                localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-                closeLogin();
-                document.getElementById('loginArea').innerHTML = `
-                    <span>👋 Welcome <strong>${user.userId}</strong>! </span>
-                    <button onclick="logoutUser()" style="margin-left:10px; padding:5px 15px; background:#dc3545; color:white; border:none; border-radius:5px; cursor:pointer;">Logout</button>
+                // USER LOGGED IN
+                loginArea.innerHTML = `
+                    <span style="color: white; margin-right: 10px;">👋 Welcome ${user.email.split('@')[0]}!</span>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
                 `;
-                document.getElementById('mainContent').style.display = 'block';
-                alert(`Welcome back ${user.userId}!`);
+                mainContent.style.display = 'block';
             } else {
-                alert('❌ Wrong User ID or Password!');
+                // NO USER LOGGED IN
+                loginArea.innerHTML = `
+                    <button class="login-btn" onclick="showLogin()">🔐 Login</button>
+                `;
+                mainContent.style.display = 'none';
             }
-        }
+        });
 
-        // Logout
-        function logoutUser() {
-            localStorage.removeItem(CURRENT_USER_KEY);
-            document.getElementById('loginArea').innerHTML = `
-                <button onclick="showLoginModal()" style="padding:10px 20px; background:#667eea; color:white; border:none; border-radius:5px; cursor:pointer;">
-                    🔐 Login
-                </button>
-            `;
-            document.getElementById('mainContent').style.display = 'none';
-        }
-
-        // Check if already logged in
-        if (localStorage.getItem(CURRENT_USER_KEY)) {
-            const user = JSON.parse(localStorage.getItem(CURRENT_USER_KEY));
-            document.getElementById('loginArea').innerHTML = `
-                <span>👋 Welcome <strong>${user.userId}</strong>! </span>
-                <button onclick="logoutUser()" style="margin-left:10px; padding:5px 15px; background:#dc3545; color:white; border:none; border-radius:5px; cursor:pointer;">Logout</button>
-            `;
-            document.getElementById('mainContent').style.display = 'block';
-        }
-
-        // Close modal when clicking outside
-        document.getElementById('loginModal').onclick = function(e) {
-            if (e.target === this) closeLogin();
-        }
+        // 🎯 CLOSE MODAL ON OUTSIDE CLICK
+        document.getElementById('loginModal').onclick = (e) => {
+            if (e.target === document.getElementById('loginModal')) {
+                closeLogin();
+            }
+        };
     </script>
 </body>
-
 </html>
