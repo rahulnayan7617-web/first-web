@@ -142,9 +142,9 @@
 
     <!-- 🔥 YOUR FIREBASE CONFIG + LOGIN SYSTEM -->
     <script type="module">
-        // YOUR FIREBASE CONFIG (UPDATED FOR v12.7.0)
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-auth.js";
+        // YOUR FIREBASE CONFIG (UPDATED FOR v9.22.0)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDEF3w3xaLBQw3ctkdikywqiXy9hvr00Bg",
@@ -219,6 +219,7 @@
                 await signInWithEmailAndPassword(auth, email, password);
                 document.getElementById('email').value = '';
                 document.getElementById('password').value = '';
+                closeLogin();
             } catch (error) {
                 if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
                     alert('❌ Wrong email or password!');
