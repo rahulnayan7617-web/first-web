@@ -111,24 +111,26 @@
         <!-- ADMIN DASHBOARD (HIDDEN) -->
         <div id="adminDashboard" style="display:none;">
             <h1>👨‍💼 Admin Panel</h1>
-            <p>Manage all users from your main website (index.html)</p>
+            <p>Manage contact form submissions from your main website.</p>
 
             <div class="stats">
                 <div class="stat">
                     <h2 id="totalUsers">0</h2>
-                    <p>Total Users</p>
+                    <p>Total Profiles</p>
                 </div>
                 <div class="stat">
                     <h2 id="activeUsers">0</h2>
-                    <p>Active Today</p>
+                    <p>Submitted Today</p>
                 </div>
             </div>
 
             <table>
                 <thead>
                     <tr>
-                        <th>User ID</th>
-                        <th>Joined Date</th>
+                        <th>Account Email</th>
+                        <th>Contact</th>
+                        <th>Message</th>
+                        <th>Submitted</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -146,6 +148,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js';
         import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js';
+        import { getDatabase, ref, get, remove } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyDEF3w3xaLBQw3ctkdikywqiXy9hvr00Bg",
@@ -160,6 +163,8 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const database = getDatabase(app);
+        let profiles = {};
 
         // Attached to 'window' so your HTML buttons can trigger them
         window.adminLogin = function () {
@@ -176,52 +181,105 @@
                 });
         }
 
-        function getUsers() {
-            return JSON.parse(localStorage.getItem('websiteUsers')) || [];
-        }
-
-        window.loadUsers = function () {
-            const users = getUsers();
-            document.getElementById('totalUsers').textContent = users.length;
+        window.loadUsers = async function () {
             const tbody = document.getElementById('usersTable');
             tbody.innerHTML = '';
+            document.getElementById('totalUsers').textContent = '...';
+            document.getElementById('activeUsers').textContent = '...';
 
-            users.forEach((user, index) => {
+            try {
+                const snapshot = await get(ref(database, 'profiles'));
+                profiles = snapshot.exists() ? snapshot.val() : {};
+                const profileList = Object.values(profiles);
+                const today = new Date().toDateString();
+                const submittedToday = profileList.filter((profile) => profile.submittedAt &&
+                    new Date(profile.submittedAt).toDateString() === today).length;
+
+                document.getElementById('totalUsers').textContent = profileList.length;
+                document.getElementById('activeUsers').textContent = submittedToday;
+
+                if (!profileList.length) {
+                    const row = tbody.insertRow();
+                    const cell = row.insertCell();
+                    cell.colSpan = 5;
+                    cell.textContent = 'No profiles have been submitted yet.';
+                    return;
+                }
+
+                profileList.sort((first, second) => (second.submittedAt || 0) - (first.submittedAt || 0));
+                profileList.forEach((profile) => {
+                    const row = tbody.insertRow();
+                    const accountCell = row.insertCell();
+                    accountCell.textContent = profile.accountEmail || 'Unknown account';
+                    const contactCell = row.insertCell();
+                    contactCell.textContent = `${profile.name || ''} | ${profile.email || ''} | ${profile.phone || ''}`;
+                    const messageCell = row.insertCell();
+                    messageCell.textContent = profile.message || '';
+                    const dateCell = row.insertCell();
+                    dateCell.textContent = profile.submittedAt
+                        ? new Date(profile.submittedAt).toLocaleString()
+                        : 'Unknown date';
+                    const actionCell = row.insertCell();
+                    const deleteButton = document.createElement('button');
+                    deleteButton.className = 'delete-btn';
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.addEventListener('click', () => window.deleteUser(profile.uid));
+                    actionCell.appendChild(deleteButton);
+                });
+            } catch (error) {
+                console.error('Profile loading failed:', error);
+                document.getElementById('totalUsers').textContent = '0';
+                document.getElementById('activeUsers').textContent = '0';
                 const row = tbody.insertRow();
-                row.innerHTML = `
-        <td><strong>${user.userId}</strong></td>
-        <td>${new Date(user.joined).toLocaleDateString()}</td>
-        <td><button class="delete-btn" onclick="window.deleteUser(${index})">Delete</button></td>
-      `;
-            });
-        }
+                const cell = row.insertCell();
+                cell.colSpan = 5;
+                cell.textContent = 'Could not load profiles. Check your Firebase Database Rules.';
+            }
+        };
 
-        window.deleteUser = function (index) {
+        window.deleteUser = async function (uid) {
             if (confirm('Delete this user?')) {
-                const users = getUsers();
-                users.splice(index, 1);
-                localStorage.setItem('websiteUsers', JSON.stringify(users));
-                window.loadUsers();
+                try {
+                    await remove(ref(database, `profiles/${uid}`));
+                    await window.loadUsers();
+                } catch (error) {
+                    alert('Could not delete this profile. Check your Firebase Database Rules.');
+                    console.error('Profile deletion failed:', error);
+                }
             }
-        }
+        };
 
-        window.clearAll = function () {
+        window.clearAll = async function () {
             if (confirm('⚠️ Delete ALL users? Cannot undo!')) {
-                localStorage.removeItem('websiteUsers');
-                window.loadUsers();
+                try {
+                    await remove(ref(database, 'profiles'));
+                    await window.loadUsers();
+                } catch (error) {
+                    alert('Could not delete profiles. Check your Firebase Database Rules.');
+                    console.error('Profile deletion failed:', error);
+                }
             }
-        }
+        };
 
         window.exportUsers = function () {
-            const users = getUsers();
-            const csv = 'UserID,JoinedDate\n' + users.map(u => `${u.userId},"${u.joined}"`).join('\n');
+            const profileList = Object.values(profiles);
+            const csvValue = (value) => `"${String(value || '').replace(/"/g, '""')}"`;
+            const csv = 'AccountEmail,Name,ContactEmail,Phone,Message,SubmittedAt\n' + profileList.map((profile) => [
+                profile.accountEmail,
+                profile.name,
+                profile.email,
+                profile.phone,
+                profile.message,
+                profile.submittedAt ? new Date(profile.submittedAt).toISOString() : ''
+            ].map(csvValue).join(',')).join('\n');
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = 'users.csv';
             a.click();
-        }
+            URL.revokeObjectURL(url);
+        };
     </script>
 </body>
 
