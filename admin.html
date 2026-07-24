@@ -147,7 +147,7 @@
     </div>
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js';
-        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js';
+        import { getAuth, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js';
         import { getDatabase, ref, get, remove } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js';
 
         const firebaseConfig = {
@@ -171,12 +171,23 @@
             const password = document.getElementById('adminPass').value;
             signInWithEmailAndPassword(auth, 'rahulnayan010@gmail.com', password)
                 .then((userCredential) => {
+                    return userCredential.user.reload().then(() => userCredential);
+                })
+                .then((userCredential) => {
+                    if (userCredential.user.email !== 'rahulnayan010@gmail.com') {
+                        throw new Error('This Firebase account is not authorized for the admin panel.');
+                    }
+                    if (!userCredential.user.emailVerified) {
+                        return signOut(auth).then(() => {
+                            throw new Error('Please verify the admin email before opening the admin panel.');
+                        });
+                    }
                     document.getElementById('adminLogin').style.display = 'none';
                     document.getElementById('adminDashboard').style.display = 'block';
                     window.loadUsers();
                 })
                 .catch((error) => {
-                    alert('❌ Invalid password or user does not exist in Firebase!');
+                    alert(`❌ Admin login failed: ${error.message}`);
                     console.error(error);
                 });
         }
@@ -210,7 +221,7 @@
                 profileList.forEach((profile) => {
                     const row = tbody.insertRow();
                     const accountCell = row.insertCell();
-                    accountCell.textContent = profile.accountEmail || 'Unknown account';
+                    accountCell.textContent = `${profile.username || 'No username'} (${profile.accountEmail || 'Unknown account'})`;
                     const contactCell = row.insertCell();
                     contactCell.textContent = `${profile.name || ''} | ${profile.email || ''} | ${profile.phone || ''}`;
                     const messageCell = row.insertCell();
@@ -264,7 +275,8 @@
         window.exportUsers = function () {
             const profileList = Object.values(profiles);
             const csvValue = (value) => `"${String(value || '').replace(/"/g, '""')}"`;
-            const csv = 'AccountEmail,Name,ContactEmail,Phone,Message,SubmittedAt\n' + profileList.map((profile) => [
+            const csv = 'Username,AccountEmail,Name,ContactEmail,Phone,Message,SubmittedAt\n' + profileList.map((profile) => [
+                profile.username,
                 profile.accountEmail,
                 profile.name,
                 profile.email,

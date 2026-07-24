@@ -50,6 +50,9 @@
             font-size: 16px; transition: all 0.3s;
         }
         textarea { min-height: 140px; resize: vertical; font-family: inherit; }
+        .phone-input { display: flex; align-items: center; gap: 8px; }
+        .country-code { padding: 18px 12px; background: #f1f3f5; border: 2px solid #e1e5e9; border-radius: 12px; font-weight: bold; }
+        .phone-input input { flex: 1; }
         input:focus, textarea:focus {
             outline: none; border-color: #667eea; 
             box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
@@ -110,7 +113,10 @@
             <input type="email" id="contactEmail" name="email" placeholder="you@example.com" autocomplete="email" maxlength="120" required>
 
             <label for="phone" style="display: block; margin-bottom: 10px; font-weight: bold;">Phone</label>
-            <input type="tel" id="phone" name="phone" placeholder="+1 555 123 4567" autocomplete="tel" minlength="7" maxlength="20" required>
+            <div class="phone-input">
+                <span class="country-code" aria-label="India country code">+91</span>
+                <input type="tel" id="phone" name="phone" placeholder="98765 43210" autocomplete="tel-national" inputmode="numeric" minlength="10" maxlength="10" pattern="[6-9][0-9]{9}" required>
+            </div>
 
             <label for="message" style="display: block; margin-bottom: 10px; font-weight: bold;">Message</label>
             <textarea id="message" name="message" placeholder="Write your message" minlength="10" maxlength="1000" required></textarea>
@@ -126,17 +132,20 @@
             
             <div id="loginForm">
                 <h2 style="margin-bottom: 25px; text-align: center; color: #333;">🔐 Welcome Back</h2>
-                <input id="email" type="email" placeholder="📧 Enter your email">
+                <input id="email" type="email" placeholder="📧 Enter your email" autocomplete="email">
                 <input id="password" type="password" placeholder="🔒 Enter your password">
-                <button class="login-btn" onclick="window.login()">Sign In</button>
+                <button type="button" class="login-btn" id="loginButton">Sign In</button>
+                <button type="button" class="register-btn" id="resendVerificationButton" onclick="window.resendVerificationEmail()">Resend Verification Email</button>
+                <p id="verificationStatus" role="status" aria-live="polite" style="min-height: 24px; margin-top: 10px;"></p>
                 <div class="switch" onclick="window.showRegister()">Don't have account? 📝 Register</div>
             </div>
 
             <div id="registerForm" class="hidden">
                 <h2 style="margin-bottom: 25px; text-align: center; color: #333;">📝 Create Account</h2>
-                <input id="regEmail" type="email" placeholder="📧 Enter your email">
+                <input id="regUsername" type="text" placeholder="👤 Create a username" autocomplete="username">
+                <input id="regEmail" type="email" placeholder="📧 Enter your email" autocomplete="email">
                 <input id="regPassword" type="password" placeholder="🔒 Create password (6+ chars)">
-                <button class="register-btn" onclick="window.register()">Create Account</button>
+                <button type="button" class="register-btn" onclick="window.register()">Create Account</button>
                 <div class="switch" onclick="window.showLogin()">Already have account? 🔐 Login</div>
             </div>
         </div>
@@ -145,7 +154,7 @@
     <script type="module">
         // FIXED: MATCHING FIREBASE VERSIONS (10.8.1)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getDatabase, ref, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
         const firebaseConfig = {
@@ -165,6 +174,25 @@
         const database = getDatabase(app);
         const profileForm = document.getElementById('profileForm');
         const formStatus = document.getElementById('formStatus');
+        const verificationStatus = document.getElementById('verificationStatus');
+        const resendVerificationButton = document.getElementById('resendVerificationButton');
+        let authFlowInProgress = false;
+        let resendCooldown = 0;
+
+        const getAuthErrorMessage = (error) => {
+            switch (error.code) {
+                case 'auth/email-already-in-use': return 'This email is already registered. Please log in instead.';
+                case 'auth/weak-password': return 'Your password is too weak. Use at least 6 characters.';
+                case 'auth/invalid-email': return 'Please enter a valid email address.';
+                case 'auth/network-request-failed': return 'Network error. Check your internet connection and try again.';
+                case 'auth/user-token-expired': return 'Your session expired. Please log in again.';
+                case 'auth/too-many-requests': return 'Too many attempts. Please wait and try again later.';
+                case 'auth/invalid-credential':
+                case 'auth/wrong-password':
+                case 'auth/user-not-found': return 'The email or password is incorrect.';
+                default: return error.message || 'Something went wrong. Please try again.';
+            }
+        };
 
         profileForm.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -173,10 +201,10 @@
 
             const name = document.getElementById('yourname').value.trim();
             const email = document.getElementById('contactEmail').value.trim();
-            const phone = document.getElementById('phone').value.trim();
+            const phone = document.getElementById('phone').value.replace(/\D/g, '');
             const message = document.getElementById('message').value.trim();
             const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            const phonePattern = /^[+\d][\d\s().-]{6,19}$/;
+            const phonePattern = /^[6-9]\d{9}$/;
 
             if (name.length < 2 || name.length > 80 || !/^[\p{L}\s.'-]+$/u.test(name)) {
                 formStatus.textContent = 'Please enter a valid name (2-80 letters).';
@@ -194,8 +222,8 @@
                 formStatus.textContent = 'Your message must be between 10 and 1000 characters.';
                 return;
             }
-            if (!auth.currentUser) {
-                formStatus.textContent = 'Please log in before sending the form.';
+            if (!auth.currentUser || !auth.currentUser.emailVerified) {
+                formStatus.textContent = 'Please verify your email and log in before sending the form.';
                 return;
             }
 
@@ -205,9 +233,10 @@
                 await set(ref(database, `profiles/${auth.currentUser.uid}`), {
                     uid: auth.currentUser.uid,
                     accountEmail: auth.currentUser.email,
+                    username: auth.currentUser.displayName || '',
                     name,
                     email,
-                    phone,
+                    phone: `+91${phone}`,
                     message,
                     submittedAt: serverTimestamp()
                 });
@@ -216,7 +245,14 @@
                 formStatus.textContent = 'Your message was sent successfully.';
             } catch (error) {
                 console.error('Profile submission failed:', error);
-                formStatus.textContent = 'Could not send your message. Please try again.';
+                if (error.code === 'auth/user-token-expired') {
+                    await signOut(auth);
+                    formStatus.textContent = 'Your session expired. Please log in again.';
+                } else if (error.code === 'PERMISSION_DENIED') {
+                    formStatus.textContent = 'Firebase denied this submission. Update your Realtime Database Rules.';
+                } else {
+                    formStatus.textContent = `Could not send your message: ${error.message}`;
+                }
             } finally {
                 submitButton.disabled = false;
             }
@@ -245,50 +281,158 @@
 
         // 📝 REGISTER NEW USER
         window.register = async () => {
+            const username = document.getElementById('regUsername').value.trim();
             const email = document.getElementById('regEmail').value.trim();
             const password = document.getElementById('regPassword').value;
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             
-            if (!email || !password || password.length < 6) {
-                return alert('❌ Email & Password (6+ chars) required!');
+            if (!username) {
+                return alert('❌ Please create a username.');
+            }
+            if (!emailPattern.test(email)) {
+                return alert('❌ Please enter a valid email address.');
+            }
+            if (!password || password.length < 6) {
+                return alert('❌ Password must be at least 6 characters.');
             }
             
+            authFlowInProgress = true;
             try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                alert('✅ Account created! Please login.');
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(userCredential.user, { displayName: username });
+                await sendEmailVerification(userCredential.user);
+                await signOut(auth);
+                alert('✅ Account created. A verification email has been sent. Verify your email before logging in.');
+                document.getElementById('regUsername').value = '';
                 document.getElementById('regEmail').value = '';
                 document.getElementById('regPassword').value = '';
                 window.showLoginForm(); // FIXED: Added window.
             } catch (error) {
-                if (error.code === 'auth/email-already-in-use') {
-                    alert('❌ Email already registered! Login instead.');
+                alert('❌ Registration failed: ' + getAuthErrorMessage(error));
+            } finally {
+                authFlowInProgress = false;
+            }
+        };
+
+        window.resendVerificationEmail = async () => {
+            if (resendCooldown > 0) {
+                verificationStatus.style.color = '#dc3545';
+                verificationStatus.textContent = `Please wait ${resendCooldown} seconds before requesting another email.`;
+                return;
+            }
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailPattern.test(email) || !password) {
+                verificationStatus.style.color = '#dc3545';
+                verificationStatus.textContent = 'Enter your email and password first.';
+                return;
+            }
+
+            resendVerificationButton.disabled = true;
+            authFlowInProgress = true;
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                await userCredential.user.reload();
+                if (userCredential.user.emailVerified) {
+                    verificationStatus.style.color = '#198754';
+                    verificationStatus.textContent = 'Your email is already verified. You can log in.';
+                    resendVerificationButton.disabled = false;
                 } else {
-                    alert('❌ Registration failed: ' + error.message);
+                    await sendEmailVerification(userCredential.user);
+                    verificationStatus.style.color = '#198754';
+                    verificationStatus.textContent = 'A new verification email has been sent.';
+                    resendCooldown = 60;
+                    const cooldownTimer = setInterval(() => {
+                        resendCooldown -= 1;
+                        if (resendCooldown <= 0) {
+                            clearInterval(cooldownTimer);
+                            resendVerificationButton.disabled = false;
+                            verificationStatus.textContent = 'You can request another verification email.';
+                        } else {
+                            verificationStatus.textContent = `Verification email sent. Try again in ${resendCooldown} seconds.`;
+                        }
+                    }, 1000);
                 }
+                await signOut(auth);
+            } catch (error) {
+                verificationStatus.style.color = '#dc3545';
+                verificationStatus.textContent = getAuthErrorMessage(error);
+                resendVerificationButton.disabled = false;
+            } finally {
+                authFlowInProgress = false;
             }
         };
 
         // 🔐 LOGIN USER
-        window.login = async () => {
+        window.login = async (event) => {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            console.log('🔐 Login attempt started');
+            
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             
-            if (!email || !password) {
-                return alert('❌ Please enter email & password!');
+            if (!emailPattern.test(email)) {
+                console.log('Invalid email format:', email);
+                return alert('❌ Please enter a valid email address.');
             }
+            if (!password) {
+                console.log('No password entered');
+                return alert('❌ Please enter your password.');
+            }
+            
+            authFlowInProgress = true;
+            console.log('Starting Firebase authentication...');
             
             try {
-                await signInWithEmailAndPassword(auth, email, password);
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                console.log('✓ User authenticated, reloading...');
+                
+                await userCredential.user.reload();
+                console.log('✓ User reloaded, verification status:', userCredential.user.emailVerified);
+                
+                if (!userCredential.user.emailVerified) {
+                    console.log('Email not verified, signing out...');
+                    await signOut(auth);
+                    authFlowInProgress = false;
+                    return alert('❌ Please verify your email before logging in. Check your inbox.');
+                }
+                
+                console.log('✓ Email verified, updating UI...');
                 document.getElementById('email').value = '';
                 document.getElementById('password').value = '';
-                window.closeLogin(); // FIXED: Added window.
+                window.closeLogin();
+                
+                // Manually update UI immediately
+                const loginArea = document.getElementById('loginArea');
+                const mainContent = document.getElementById('mainContent');
+                loginArea.innerHTML = `
+                    <span style="color: white; margin-right: 10px;">👋 Welcome ${auth.currentUser.displayName || auth.currentUser.email.split('@')[0]}!</span>
+                    <button class="logout-btn" onclick="window.logout()">Logout</button>
+                `;
+                mainContent.style.display = 'block';
+                authFlowInProgress = false;
+                console.log('✓ Login successful');
+                return true;
             } catch (error) {
-                if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-                    alert('❌ Wrong email or password!');
-                } else {
-                    alert('❌ Login failed: ' + error.message);
-                }
+                console.error('❌ Login error:', error.code, error.message);
+                alert('❌ Login failed: ' + getAuthErrorMessage(error));
+                authFlowInProgress = false;
             }
+            return false;
         };
+        
+        document.getElementById('loginButton').addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.login(e);
+        });
 
         // 🚪 LOGOUT
         window.logout = async () => {
@@ -300,19 +444,34 @@
         };
 
         // ✨ AUTO LOGIN CHECK (runs on page load)
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             const loginArea = document.getElementById('loginArea');
             const mainContent = document.getElementById('mainContent');
             
             if (user) {
-                // USER LOGGED IN
-                loginArea.innerHTML = `
-                    <span style="color: white; margin-right: 10px;">👋 Welcome ${user.email.split('@')[0]}!</span>
-                    <button class="logout-btn" onclick="window.logout()">Logout</button>
-                `;
-                mainContent.style.display = 'block';
+                try {
+                    await user.reload();
+                    if (!auth.currentUser.emailVerified) {
+                        console.warn('User email not verified, signing out.');
+                        await signOut(auth);
+                        loginArea.innerHTML = `
+                            <button class="login-btn" onclick="window.showLogin()">🔐 Login</button>
+                        `;
+                        mainContent.style.display = 'none';
+                        return;
+                    }
+                    console.log('✓ Auth state updated: user verified');
+                    loginArea.innerHTML = `
+                        <span style="color: white; margin-right: 10px;">👋 Welcome ${auth.currentUser.displayName || auth.currentUser.email.split('@')[0]}!</span>
+                        <button class="logout-btn" onclick="window.logout()">Logout</button>
+                    `;
+                    mainContent.style.display = 'block';
+                } catch (error) {
+                    console.error('Auth reload failed:', error);
+                    mainContent.style.display = 'none';
+                }
             } else {
-                // NO USER LOGGED IN
+                console.log('✓ Auth state updated: no user');
                 loginArea.innerHTML = `
                     <button class="login-btn" onclick="window.showLogin()">🔐 Login</button>
                 `;
